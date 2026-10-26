@@ -332,7 +332,7 @@
                 </div>
                 <h1 class="font-serif text-3xl sm:text-4xl font-semibold">Catalog & Inventory Manager</h1>
                 <p class="text-cream/70 text-xs sm:text-sm mt-1 max-w-2xl">
-                    Upload new jewelry catalogs, update prices & discounts, toggle stock availability, or delete items. All orders are routed to <strong class="text-goldLight">+91 9778405380</strong>.
+                    Upload new jewelry catalogs, update prices & discounts, toggle stock availability, or delete items. All orders are routed to <strong id="headerWaNumberDisplay" class="text-goldLight">+91 9778405380</strong>.
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-2.5">
@@ -500,30 +500,50 @@
 
                     <!-- Image Upload (File or URL) -->
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-obsidian/80 mb-1.5">Product Photo *</label>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-obsidian/80">Product Photos (Up to 6 Pics) *</label>
+                            <span id="photoCounterBadge" class="text-[10px] font-bold bg-gold/20 text-obsidian px-2 py-0.5 rounded-full">0 / 6 Photos</span>
+                        </div>
                         
                         <div class="flex items-center gap-3 mb-2">
                             <label class="flex-1 cursor-pointer bg-cream hover:bg-gold/10 border border-dashed border-gold rounded-xl p-3 text-center transition-all">
-                                <input type="file" id="prodImageFile" accept="image/*" onchange="handleImageUpload(event)" class="hidden">
+                                <input type="file" id="prodImageFile" accept="image/*" multiple onchange="handleImageUpload(event)" class="hidden">
                                 <div class="flex items-center justify-center gap-2 text-xs font-semibold text-obsidian">
-                                    <i class="ph-bold ph-upload-simple text-goldDark text-base"></i>
-                                    <span>Choose Photo from Gallery / PC</span>
+                                    <i class="ph-bold ph-images text-goldDark text-base"></i>
+                                    <span>Select Up to 6 Photos (Auto-Compressed for Cloud)</span>
                                 </div>
                             </label>
                         </div>
 
-                        <input id="prodImageUrl" type="text" placeholder="Or paste direct image link (https://...)" oninput="previewUrlImage(this.value)"
-                               class="w-full px-3.5 py-2 rounded-xl bg-cream border border-gold/30 text-xs focus:outline-none focus:border-obsidian">
-
-                        <!-- Live Image Preview Box -->
-                        <div id="imagePreviewContainer" class="hidden mt-3 flex items-center gap-3 bg-cream p-2.5 rounded-xl border border-gold/30">
-                            <img id="imagePreviewThumb" src="" alt="Preview" class="w-14 h-14 rounded-lg object-cover border border-gold/30">
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-obsidian truncate">Catalog Image Selected</p>
-                                <p class="text-[11px] text-obsidian/60">Ready to publish</p>
-                            </div>
-                            <button type="button" onclick="clearImagePreview()" class="text-xs text-red-600 hover:underline px-2 font-semibold">Remove</button>
+                        <div class="flex gap-2">
+                            <input id="prodImageUrl" type="text" placeholder="Or paste direct image link (https://...)"
+                                   class="flex-1 px-3.5 py-2 rounded-xl bg-cream border border-gold/30 text-xs focus:outline-none focus:border-obsidian">
+                            <button type="button" onclick="addUrlImageToGallery()" class="px-3.5 py-2 rounded-xl bg-obsidian text-gold text-xs font-bold uppercase tracking-wider shrink-0 hover:bg-emeraldDeep transition-all">
+                                + Add URL
+                            </button>
                         </div>
+
+                        <!-- Live Multi-Image Gallery Preview Box -->
+                        <div id="imagePreviewContainer" class="hidden mt-3 bg-cream p-3 rounded-xl border border-gold/30">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-[11px] font-bold text-obsidian/70 uppercase tracking-wider">Gallery Preview (1st pic is Cover)</p>
+                                <button type="button" onclick="clearImagePreview()" class="text-[11px] text-red-600 hover:underline font-semibold">Clear All</button>
+                            </div>
+                            <div id="multiImagePreviewGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                                <!-- Thumbnails injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Instagram Reel / Video Link -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-obsidian/80 mb-1.5 flex items-center gap-1.5">
+                            <i class="ph-fill ph-instagram-logo text-pink-600 text-sm"></i>
+                            <span>Instagram Reel or Video Link (Optional)</span>
+                        </label>
+                        <input id="prodVideoUrl" type="url" placeholder="https://www.instagram.com/reel/... or .mp4 link"
+                               class="w-full px-3.5 py-2.5 rounded-xl bg-cream border border-gold/30 text-xs focus:outline-none focus:border-obsidian">
+                        <p class="text-[10px] text-obsidian/55 mt-1">Paste an Instagram Reel link or direct video URL to play inside the product view.</p>
                     </div>
 
                     <!-- Material / Description -->
@@ -709,13 +729,67 @@
     <!-- ========================================== -->
     <!-- QUICK VIEW PRODUCT MODAL                   -->
     <!-- ========================================== -->
-    <div id="quickViewModal" class="fixed inset-0 bg-obsidian/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-        <div class="bg-cream rounded-3xl max-w-3xl w-full overflow-hidden border border-gold/40 shadow-2xl animate-fade-in relative">
-            <button onclick="closeQuickView()" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-obsidian/80 text-cream hover:bg-obsidian flex items-center justify-center">
+    <div id="quickViewModal" class="fixed inset-0 bg-obsidian/75 backdrop-blur-xs z-50 hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-cream rounded-3xl max-w-4xl w-full overflow-hidden border border-gold/40 shadow-2xl animate-fade-in relative my-auto max-h-[92vh] overflow-y-auto">
+            <button onclick="closeQuickView()" class="sticky sm:absolute top-4 right-4 float-right z-20 w-9 h-9 rounded-full bg-obsidian/85 text-cream hover:bg-obsidian flex items-center justify-center shadow-lg">
                 <i class="ph ph-x text-lg"></i>
             </button>
-            <div id="quickViewContent" class="grid grid-cols-1 md:grid-cols-2">
+            <div id="quickViewContent" class="grid grid-cols-1 md:grid-cols-12">
                 <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SHARE SINGLE PRODUCT MODAL                 -->
+    <!-- ========================================== -->
+    <div id="shareProductModal" class="fixed inset-0 bg-obsidian/75 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-cream rounded-3xl max-w-md w-full overflow-hidden border border-gold/40 shadow-2xl animate-fade-in">
+            <div class="bg-obsidian text-cream p-5 flex items-center justify-between border-b border-gold/30">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-full bg-gold/20 border border-gold flex items-center justify-center text-gold">
+                        <i class="ph-fill ph-share-network text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-xl font-semibold">Share Jewelry Piece</h3>
+                        <p class="text-[11px] text-goldLight/80">Send direct link to customers or friends</p>
+                    </div>
+                </div>
+                <button onclick="closeShareModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="flex items-center gap-3.5 bg-alabaster p-3 rounded-2xl border border-gold/25">
+                    <img id="shareModalImg" src="" alt="" class="w-16 h-16 rounded-xl object-cover border border-gold/30 shrink-0">
+                    <div class="min-w-0 flex-1">
+                        <span id="shareModalCat" class="text-[10px] uppercase tracking-widest text-goldDark font-bold"></span>
+                        <h4 id="shareModalTitle" class="font-serif text-lg font-semibold text-obsidian truncate"></h4>
+                        <p id="shareModalPrice" class="text-sm font-bold text-emerald-800"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-obsidian/60 mb-1">Direct Product Link</label>
+                    <div class="flex gap-2">
+                        <input id="shareModalLinkInput" type="text" readonly class="flex-1 px-3 py-2.5 rounded-xl bg-alabaster border border-gold/30 text-xs font-mono text-obsidian focus:outline-none">
+                        <button onclick="copyShareProductLink()" class="px-4 py-2.5 rounded-xl bg-obsidian text-gold text-xs font-bold uppercase tracking-wider hover:bg-emeraldDeep transition-all flex items-center gap-1.5 shrink-0">
+                            <i class="ph-bold ph-copy"></i>
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <a id="shareWaBtn" href="#" target="_blank" rel="noopener noreferrer" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm">
+                        <i class="ph-fill ph-whatsapp-logo text-base"></i>
+                        <span>WhatsApp</span>
+                    </a>
+                    <button onclick="shareViaInstagramOrNative()" class="py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm">
+                        <i class="ph-fill ph-instagram-logo text-base"></i>
+                        <span>Instagram / Share</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -813,6 +887,12 @@
                 inStock: true,
                 freeDelivery: true,
                 image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=900&q=80',
+                images: [
+                    'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=900&q=80',
+                    'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=80',
+                    'https://images.unsplash.com/photo-1635767798638-3e25273a8236?auto=format&fit=crop&w=900&q=80'
+                ],
+                videoUrl: '',
                 description: '22K micro gold-plated heritage chandbali jhumkas studded with ruby kemp stones and cascading freshwater pearl drops. Featherlight comfort.'
             },
             {
@@ -825,6 +905,11 @@
                 inStock: true,
                 freeDelivery: true,
                 image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=80',
+                images: [
+                    'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=80',
+                    'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80'
+                ],
+                videoUrl: '',
                 description: 'Handcrafted multi-strand shell pearl choker featuring an intricate emerald green centerpiece and adjustable golden dori tassel.'
             },
             {
@@ -837,6 +922,8 @@
                 inStock: true,
                 freeDelivery: true,
                 image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=80',
+                images: ['https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=80'],
+                videoUrl: '',
                 description: 'High-grade AAA American Diamond chandelier drop earrings in a rose-gold finish. Ideal for cocktail evenings and festive wear.'
             },
             {
@@ -849,6 +936,8 @@
                 inStock: true,
                 freeDelivery: true,
                 image: 'https://images.unsplash.com/photo-1611591472159-259f7ce81187?auto=format&fit=crop&w=900&q=80',
+                images: ['https://images.unsplash.com/photo-1611591472159-259f7ce81187?auto=format&fit=crop&w=900&q=80'],
+                videoUrl: '',
                 description: 'Anti-tarnish 18K gold vermeil layered necklace featuring delicate sculpted medallion accents. Waterproof & everyday friendly.'
             },
             {
@@ -861,6 +950,8 @@
                 inStock: true,
                 freeDelivery: true,
                 image: 'https://images.unsplash.com/photo-1611591471898-259f7ce81187?auto=format&fit=crop&w=900&q=80',
+                images: ['https://images.unsplash.com/photo-1611591471898-259f7ce81187?auto=format&fit=crop&w=900&q=80'],
+                videoUrl: '',
                 description: 'Openable screw-clasp heritage kadas crafted with uncut polki mirrors and antique Nakshi carving. Fits sizes 2.4 to 2.8.'
             },
             {
@@ -873,6 +964,8 @@
                 inStock: true,
                 freeDelivery: true,
                 image: 'https://images.unsplash.com/photo-1635767798638-3e25273a8236?auto=format&fit=crop&w=900&q=80',
+                images: ['https://images.unsplash.com/photo-1635767798638-3e25273a8236?auto=format&fit=crop&w=900&q=80'],
+                videoUrl: '',
                 description: 'Traditional South Indian temple craft jhumkas with matte antique gold polish and tiny ghungroo cluster beads.'
             },
             {
@@ -885,6 +978,8 @@
                 inStock: true,
                 freeDelivery: true,
                 image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80',
+                images: ['https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80'],
+                videoUrl: '',
                 description: 'Complete luxury bridal suite including a grand haar, matching choker, jhumka earrings, and maang tikka in signature Kundan work.'
             },
             {
@@ -897,6 +992,8 @@
                 inStock: true,
                 freeDelivery: true,
                 image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=900&q=80',
+                images: ['https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=900&q=80'],
+                videoUrl: '',
                 description: 'Adjustable statement cocktail ring featuring a deep emerald-cut stone surrounded by brilliant-cut zirconias.'
             }
         ];
@@ -910,10 +1007,10 @@
         const DEFAULT_SELLER_WHATSAPP = '919778405380';
 
         const STORAGE_KEYS = {
-            PRODUCTS: 'jewelry_store_products_v2',
-            CART: 'jewelry_store_cart_v2',
-            WHATSAPP: 'jewelry_seller_whatsapp_v2',
-            AUTH: 'jewelry_admin_session_v2'
+            PRODUCTS: 'jewelry_store_products_v3',
+            CART: 'jewelry_store_cart_v3',
+            WHATSAPP: 'jewelry_seller_whatsapp_v3',
+            AUTH: 'jewelry_admin_session_v3'
         };
 
         let products = [];
@@ -921,11 +1018,12 @@
         let sellerWhatsApp = DEFAULT_SELLER_WHATSAPP;
         let isAdminAuthenticated = false;
         let activeCategory = 'All';
-        let uploadedImageBase64 = '';
+        let uploadedImagesList = []; // Holds up to 6 images (base64 or URLs)
         let lastGeneratedWaText = '';
         let logoTapCount = 0;
         let logoTapTimer = null;
         let pendingDeleteProductId = null;
+        let currentSharedProduct = null;
 
         // --- 3. INITIALIZATION ---
         window.onload = function() {
@@ -934,18 +1032,28 @@
             renderAdminInventory();
             updateCartUI();
             setupAdminShortcuts();
+            checkDirectProductLinkOnLoad();
         };
+
+        function normalizeProductItem(p) {
+            const imgs = Array.isArray(p.images) && p.images.length > 0
+                ? p.images.slice(0, 6)
+                : (p.image ? [p.image] : ['https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=900&q=80']);
+            return {
+                ...p,
+                image: imgs[0],
+                images: imgs,
+                videoUrl: p.videoUrl || '',
+                inStock: p.inStock !== undefined ? p.inStock : true,
+                freeDelivery: p.freeDelivery !== undefined ? p.freeDelivery : true
+            };
+        }
 
         function loadStateFromStorage() {
             try {
                 const savedProds = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
                 products = savedProds ? JSON.parse(savedProds) : [...DEFAULT_PRODUCTS];
-
-                products = products.map(p => ({
-                    ...p,
-                    inStock: p.inStock !== undefined ? p.inStock : true,
-                    freeDelivery: p.freeDelivery !== undefined ? p.freeDelivery : true
-                }));
+                products = products.map(normalizeProductItem);
 
                 const savedCart = localStorage.getItem(STORAGE_KEYS.CART);
                 cart = savedCart ? JSON.parse(savedCart) : [];
@@ -961,22 +1069,42 @@
                 updateAdminHeaderIndicator();
             } catch (e) {
                 console.error('Error accessing storage:', e);
-                products = [...DEFAULT_PRODUCTS];
+                products = DEFAULT_PRODUCTS.map(normalizeProductItem);
             }
         }
 
         function updateWhatsAppDisplayLabels() {
             const statEl = document.getElementById('statWhatsAppNumber');
-            if (statEl) {
-                statEl.textContent = '+' + sellerWhatsApp.replace(/^91/, '91 ');
-            }
+            const headerWaDisplay = document.getElementById('headerWaNumberDisplay');
+            const formatted = '+' + sellerWhatsApp.replace(/^91/, '91 ');
+            if (statEl) statEl.textContent = formatted;
+            if (headerWaDisplay) headerWaDisplay.textContent = formatted;
         }
 
         function saveProductsToStorage() {
             try {
                 localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+                if (typeof window.syncCatalogToCloud === 'function') {
+                    window.syncCatalogToCloud(products, sellerWhatsApp);
+                }
             } catch (e) {
-                showToast('Storage quota full! Try using an image URL or smaller photo.', 'warning');
+                showToast('Storage quota full! Try removing some high-res photos.', 'warning');
+            }
+        }
+
+        // Check if URL has ?item=jw-xxx so shared single-item links open automatically
+        function checkDirectProductLinkOnLoad() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const itemId = params.get('item');
+                if (itemId) {
+                    const found = products.find(p => p.id === itemId);
+                    if (found) {
+                        setTimeout(() => openQuickView(itemId), 250);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
             }
         }
 
@@ -1187,6 +1315,8 @@
                     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
                     : null;
                 const isAvailable = product.inStock !== false;
+                const photoCount = Array.isArray(product.images) ? product.images.length : 1;
+                const hasVideo = Boolean(product.videoUrl && product.videoUrl.trim());
 
                 return `
                 <article class="product-card bg-cream rounded-2xl border border-gold/25 overflow-hidden shadow-luxury flex flex-col justify-between transition-all hover:border-gold ${!isAvailable ? 'opacity-75' : ''}">
@@ -1198,11 +1328,19 @@
                                  onerror="this.src='https://placehold.co/600x750/141817/C5A059?text=JEWELRY'"
                                  class="product-img w-full h-full object-cover object-center transition-transform duration-500">
                             
-                            <!-- Top Badges -->
+                            <!-- Top Left Badges -->
                             <div class="absolute top-3 left-3 flex flex-col gap-1.5">
                                 ${product.badge ? `<span class="bg-obsidian/90 backdrop-blur-xs text-gold text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/30">${product.badge}</span>` : ''}
                                 ${discountPercent ? `<span class="bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full w-fit">${discountPercent}% OFF</span>` : ''}
+                                ${hasVideo ? `<span class="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full w-fit flex items-center gap-1 shadow-sm"><i class="ph-fill ph-play-circle"></i>Reel Video</span>` : ''}
                             </div>
+
+                            <!-- Top Right Share Single Item Button -->
+                            <button onclick="event.stopPropagation(); openShareProductModal('${product.id}')" 
+                                    class="absolute top-3 right-3 w-8 h-8 rounded-full bg-cream/90 hover:bg-obsidian text-obsidian hover:text-gold flex items-center justify-center shadow-md transition-all"
+                                    title="Share this Jewelry Link">
+                                <i class="ph-bold ph-share-network text-sm"></i>
+                            </button>
 
                             ${!isAvailable ? `
                             <div class="absolute inset-0 bg-obsidian/55 backdrop-blur-[2px] flex items-center justify-center">
@@ -1210,12 +1348,15 @@
                             </div>
                             ` : ''}
 
-                            <!-- Quick View Button -->
-                            <button onclick="event.stopPropagation(); openQuickView('${product.id}')" 
-                                    class="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-cream/90 hover:bg-obsidian text-obsidian hover:text-gold flex items-center justify-center shadow-md transition-all"
-                                    title="Quick View">
-                                <i class="ph ph-eye text-base"></i>
-                            </button>
+                            <!-- Bottom Media Count & Quick View Button -->
+                            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                                ${photoCount > 1 ? `<span class="bg-obsidian/80 backdrop-blur-xs text-cream text-[10px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><i class="ph-fill ph-images text-gold"></i>1/${photoCount} Pics</span>` : '<span></span>'}
+                                <button onclick="event.stopPropagation(); openQuickView('${product.id}')" 
+                                        class="pointer-events-auto w-9 h-9 rounded-full bg-cream/90 hover:bg-obsidian text-obsidian hover:text-gold flex items-center justify-center shadow-md transition-all"
+                                        title="Quick View Gallery & Video">
+                                    <i class="ph ph-eye text-base"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Product Details -->
@@ -1229,10 +1370,15 @@
                             <p class="text-xs text-obsidian/65 mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
                             
                             <!-- Price Row -->
-                            <div class="mt-3 flex items-baseline gap-2 flex-wrap">
-                                <span class="font-serif text-2xl font-bold text-obsidian">${formatINR(product.price)}</span>
-                                ${product.originalPrice ? `<span class="text-xs text-obsidian/45 line-through">${formatINR(product.originalPrice)}</span>` : ''}
-                                ${discountPercent ? `<span class="text-[11px] font-bold text-emerald-700">${discountPercent}% off</span>` : ''}
+                            <div class="mt-3 flex items-baseline justify-between gap-2">
+                                <div class="flex items-baseline gap-2 flex-wrap">
+                                    <span class="font-serif text-2xl font-bold text-obsidian">${formatINR(product.price)}</span>
+                                    ${product.originalPrice ? `<span class="text-xs text-obsidian/45 line-through">${formatINR(product.originalPrice)}</span>` : ''}
+                                    ${discountPercent ? `<span class="text-[11px] font-bold text-emerald-700">${discountPercent}% off</span>` : ''}
+                                </div>
+                                <button onclick="openShareProductModal('${product.id}')" class="text-[11px] font-semibold text-obsidian/60 hover:text-goldDark flex items-center gap-1">
+                                    <i class="ph ph-share-fat"></i>Share
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1264,7 +1410,17 @@
             }).join('');
         }
 
-        // --- 7. QUICK VIEW MODAL ---
+        // --- 7. QUICK VIEW MODAL WITH 6-PIC GALLERY & INSTAGRAM REEL PLAYER ---
+        function extractInstagramEmbedUrl(url) {
+            if (!url) return null;
+            const trimmed = url.trim();
+            const match = trimmed.match(/instagram\.com\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/i);
+            if (match && match[1]) {
+                return `https://www.instagram.com/reel/${match[1]}/embed`;
+            }
+            return null;
+        }
+
         function openQuickView(productId) {
             const product = products.find(p => p.id === productId);
             if (!product) return;
@@ -1273,22 +1429,60 @@
                 ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
                 : null;
 
+            const galleryImages = Array.isArray(product.images) && product.images.length > 0
+                ? product.images
+                : [product.image];
+
+            const hasVideo = Boolean(product.videoUrl && product.videoUrl.trim());
+            const igEmbedUrl = extractInstagramEmbedUrl(product.videoUrl);
+
             const modal = document.getElementById('quickViewModal');
             const content = document.getElementById('quickViewContent');
 
             content.innerHTML = `
-                <div class="aspect-square md:aspect-auto bg-alabaster relative">
-                    <img src="${product.image}" alt="${product.name}" 
-                         onerror="this.src='https://placehold.co/600x750/141817/C5A059?text=JEWELRY'"
-                         class="w-full h-full object-cover max-h-[480px]">
-                    ${discountPercent ? `<span class="absolute top-4 left-4 bg-emerald-700 text-white text-xs font-bold px-3 py-1 rounded-full">${discountPercent}% OFF</span>` : ''}
+                <!-- Left Column: Interactive Multi-Photo & Reel Video Viewer -->
+                <div class="md:col-span-7 bg-alabaster p-4 sm:p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-gold/25">
+                    <div id="qvMainStage" class="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-obsidian/5 border border-gold/25 flex items-center justify-center">
+                        <img id="qvMainImage" src="${galleryImages[0]}" alt="${product.name}" 
+                             onerror="this.src='https://placehold.co/600x750/141817/C5A059?text=JEWELRY'"
+                             class="w-full h-full object-cover">
+                        <div id="qvVideoStage" class="hidden w-full h-full bg-obsidian flex items-center justify-center"></div>
+                        ${discountPercent ? `<span class="absolute top-3 left-3 bg-emerald-700 text-white text-xs font-bold px-3 py-1 rounded-full z-10">${discountPercent}% OFF</span>` : ''}
+                    </div>
+
+                    <!-- Thumbnails Row (Up to 6 Pics + Video Tab) -->
+                    <div class="mt-4 flex items-center gap-2.5 overflow-x-auto pb-1">
+                        ${galleryImages.map((imgSrc, idx) => `
+                            <button type="button" onclick="switchQuickViewMedia('image', '${imgSrc.replace(/'/g, "\\'")}', this)" 
+                                    class="qv-thumb shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-obsidian ring-2 ring-gold' : 'border-gold/30 opacity-75 hover:opacity-100'} transition-all">
+                                <img src="${imgSrc}" class="w-full h-full object-cover">
+                            </button>
+                        `).join('')}
+
+                        ${hasVideo ? `
+                            <button type="button" onclick="switchQuickViewMedia('video', '${product.videoUrl.replace(/'/g, "\\'")}', this)" 
+                                    class="qv-thumb shrink-0 h-16 px-3.5 rounded-xl bg-gradient-to-br from-purple-700 via-pink-600 to-amber-500 text-white border-2 border-transparent hover:opacity-95 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                                <i class="ph-fill ph-instagram-logo text-lg"></i>
+                                <span>Play Reel</span>
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
-                <div class="p-6 sm:p-8 flex flex-col justify-between space-y-5">
+
+                <!-- Right Column: Details, Share & WhatsApp Buy -->
+                <div class="md:col-span-5 p-6 sm:p-7 flex flex-col justify-between space-y-5">
                     <div>
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="text-[10px] uppercase tracking-[0.25em] text-goldDark font-bold">${product.category}</span>
-                            ${product.badge ? `<span class="text-[10px] bg-gold/20 text-obsidian px-2.5 py-0.5 rounded-full font-semibold">${product.badge}</span>` : ''}
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] uppercase tracking-[0.25em] text-goldDark font-bold">${product.category}</span>
+                                ${product.badge ? `<span class="text-[10px] bg-gold/20 text-obsidian px-2.5 py-0.5 rounded-full font-semibold">${product.badge}</span>` : ''}
+                            </div>
+                            <button onclick="openShareProductModal('${product.id}')" class="px-2.5 py-1 rounded-full bg-alabaster hover:bg-gold/20 border border-gold/30 text-obsidian text-[11px] font-semibold flex items-center gap-1 transition-colors">
+                                <i class="ph-bold ph-share-network text-goldDark"></i>
+                                <span>Share Link</span>
+                            </button>
                         </div>
+
                         <h2 class="font-serif text-2xl sm:text-3xl font-semibold text-obsidian">${product.name}</h2>
                         <div class="mt-3 flex items-baseline gap-2.5">
                             <span class="font-serif text-3xl font-bold text-obsidian">${formatINR(product.price)}</span>
@@ -1297,9 +1491,20 @@
                         </div>
                         <p class="text-xs sm:text-sm text-obsidian/75 mt-4 leading-relaxed">${product.description}</p>
 
+                        ${hasVideo ? `
+                        <div class="mt-4 p-3 rounded-xl bg-pink-50/80 border border-pink-200 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 text-xs font-semibold text-pink-900">
+                                <i class="ph-fill ph-instagram-logo text-pink-600 text-lg"></i>
+                                <span>Instagram Reel Video Available</span>
+                            </div>
+                            <a href="${product.videoUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-pink-700 underline hover:text-pink-900">Open in App ↗</a>
+                        </div>
+                        ` : ''}
+
                         <div class="mt-5 pt-4 border-t border-gold/20 space-y-2 text-xs text-obsidian/75">
+                            <div class="flex items-center gap-2"><i class="ph-fill ph-images text-goldDark"></i><span>Showing ${galleryImages.length} High-Resolution Photos</span></div>
                             <div class="flex items-center gap-2"><i class="ph-fill ph-truck text-emerald-700"></i><span>${product.freeDelivery !== false ? 'Free Express Delivery across India' : 'Standard Insured Delivery'}</span></div>
-                            <div class="flex items-center gap-2"><i class="ph-fill ph-check-circle text-emerald-700"></i><span>Direct WhatsApp order to +91 9778405380 (No Login)</span></div>
+                            <div class="flex items-center gap-2"><i class="ph-fill ph-check-circle text-emerald-700"></i><span>Direct WhatsApp order to +91 9778405380</span></div>
                         </div>
                     </div>
 
@@ -1320,10 +1525,101 @@
             modal.classList.add('flex');
         }
 
+        function switchQuickViewMedia(type, src, btnEl) {
+            const imgEl = document.getElementById('qvMainImage');
+            const vidStage = document.getElementById('qvVideoStage');
+
+            document.querySelectorAll('.qv-thumb').forEach(b => {
+                b.classList.remove('border-obsidian', 'ring-2', 'ring-gold');
+            });
+            if (btnEl) {
+                btnEl.classList.add('border-obsidian', 'ring-2', 'ring-gold');
+            }
+
+            if (type === 'image') {
+                vidStage.innerHTML = '';
+                vidStage.classList.add('hidden');
+                imgEl.src = src;
+                imgEl.classList.remove('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+                vidStage.classList.remove('hidden');
+                const igEmbed = extractInstagramEmbedUrl(src);
+                if (igEmbed) {
+                    vidStage.innerHTML = `<iframe src="${igEmbed}" class="w-full h-full border-0" allowtransparency="true" allowfullscreen="true" scrolling="no"></iframe>`;
+                } else {
+                    vidStage.innerHTML = `<video src="${src}" controls autoplay playsinline class="w-full h-full object-contain"></video>`;
+                }
+            }
+        }
+
         function closeQuickView() {
+            const vidStage = document.getElementById('qvVideoStage');
+            if (vidStage) vidStage.innerHTML = '';
             const modal = document.getElementById('quickViewModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            if (window.location.search.includes('item=')) {
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+        }
+
+        // --- 7B. SHARE SINGLE PRODUCT LINK (WHATSAPP / INSTAGRAM / DIRECT LINK) ---
+        function getProductShareUrl(productId) {
+            const baseUrl = window.location.origin + window.location.pathname;
+            return `${baseUrl}?item=${encodeURIComponent(productId)}`;
+        }
+
+        function openShareProductModal(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            currentSharedProduct = product;
+
+            const shareUrl = getProductShareUrl(product.id);
+            document.getElementById('shareModalImg').src = product.image;
+            document.getElementById('shareModalCat').textContent = product.category;
+            document.getElementById('shareModalTitle').textContent = product.name;
+            document.getElementById('shareModalPrice').textContent = formatINR(product.price);
+            document.getElementById('shareModalLinkInput').value = shareUrl;
+
+            const waShareText = `✨ Check out this *${product.name}* (${formatINR(product.price)}) at JEWELRY Atelier!\n\n👉 View Pics & Order here: ${shareUrl}`;
+            document.getElementById('shareWaBtn').href = `https://wa.me/?text=${encodeURIComponent(waShareText)}`;
+
+            const modal = document.getElementById('shareProductModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('shareProductModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function copyShareProductLink() {
+            const input = document.getElementById('shareModalLinkInput');
+            input.select();
+            document.execCommand('copy');
+            showToast('Direct product link copied! Ready to paste on Instagram or WhatsApp.');
+        }
+
+        async function shareViaInstagramOrNative() {
+            if (!currentSharedProduct) return;
+            const shareUrl = getProductShareUrl(currentSharedProduct.id);
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: currentSharedProduct.name,
+                        text: `✨ ${currentSharedProduct.name} - ${formatINR(currentSharedProduct.price)} at JEWELRY Atelier`,
+                        url: shareUrl
+                    });
+                    return;
+                } catch (err) {
+                    // Fallback to copy
+                }
+            }
+            copyShareProductLink();
         }
 
         // --- 8. SHOPPING BAG / CART LOGIC ---
@@ -1439,6 +1735,7 @@
             const product = products.find(p => p.id === productId);
             if (!product) return;
 
+            const shareUrl = getProductShareUrl(product.id);
             const orderLines = [
                 `✨ *NEW ORDER - JEWELRY ATELIER* ✨`,
                 `----------------------------------`,
@@ -1447,6 +1744,7 @@
                 `🔢 *Quantity:* 1`,
                 `💰 *Price:* ${formatINR(product.price)}${product.originalPrice ? ` (MRP: ${formatINR(product.originalPrice)})` : ''}`,
                 `🚚 *Delivery:* ${product.freeDelivery !== false ? 'FREE Delivery' : 'Standard'}`,
+                `🔗 *Product Link:* ${shareUrl}`,
                 `----------------------------------`,
                 `💎 *Total Payable:* *${formatINR(product.price)}*`,
                 ``,
@@ -1468,7 +1766,7 @@
             const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
             let orderLines = [
-                `✨ *NEW JEWELRY ORDER - JEWELRY* ✨`,
+                `✨ *NEW CART ORDER - JEWELRY ATELIER* ✨`,
                 `----------------------------------`
             ];
 
@@ -1482,21 +1780,21 @@
 
             if (custName || custCity || custNote) {
                 orderLines.push(``);
-                orderLines.push(`📍 *Customer Delivery Details:*`);
+                orderLines.push(`📍 *Customer Details:*`);
                 if (custName) orderLines.push(`• Name: ${custName}`);
                 if (custCity) orderLines.push(`• City/Pincode: ${custCity}`);
                 if (custNote) orderLines.push(`• Note: ${custNote}`);
             }
 
             orderLines.push(``);
-            orderLines.push(`Please confirm availability and share payment details.`);
+            orderLines.push(`Please confirm availability and share UPI / payment details.`);
 
             toggleCart(false);
             launchWhatsAppPreview(orderLines.join('\n'));
         }
 
         function openWhatsAppDirectSupport() {
-            const msg = `Hello JEWELRY Atelier! ✨ I am browsing your jewelry collection and would like to inquire about your pieces.`;
+            const msg = `Hello JEWELRY Atelier! ✨ I am browsing your jewelry collection and have a quick query.`;
             launchWhatsAppPreview(msg);
         }
 
@@ -1531,7 +1829,7 @@
             showToast('Order details copied to clipboard!');
         }
 
-        // --- 10. MEESHO-STYLE SUPPLIER STUDIO CRUD LOGIC ---
+        // --- 10. MEESHO-STYLE SUPPLIER STUDIO CRUD LOGIC (UP TO 6 PHOTOS + VIDEO + CLOUD SYNC) ---
         function saveSellerWhatsApp(event) {
             event.preventDefault();
             const inputVal = document.getElementById('adminWhatsappInput').value.trim();
@@ -1543,6 +1841,9 @@
             sellerWhatsApp = cleaned;
             document.getElementById('adminWhatsappInput').value = cleaned;
             localStorage.setItem(STORAGE_KEYS.WHATSAPP, cleaned);
+            if (typeof window.syncCatalogToCloud === 'function') {
+                window.syncCatalogToCloud(products, sellerWhatsApp);
+            }
             updateWhatsAppDisplayLabels();
             showToast(`Orders will now go to WhatsApp +${cleaned}`);
         }
@@ -1561,40 +1862,108 @@
             }
         }
 
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                uploadedImageBase64 = e.target.result;
-                document.getElementById('prodImageUrl').value = '';
-                showImagePreview(uploadedImageBase64);
-            };
-            reader.readAsDataURL(file);
+        // Compress uploaded photo on canvas so up to 6 photos fit smoothly in Cloud DB & LocalStorage
+        function compressImageFile(file, maxWidth = 800, quality = 0.72) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > maxWidth) {
+                            h = Math.round((h * maxWidth) / w);
+                            w = maxWidth;
+                        }
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = () => resolve(e.target.result);
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
         }
 
-        function previewUrlImage(url) {
-            if (url && url.trim().startsWith('http')) {
-                uploadedImageBase64 = '';
-                showImagePreview(url.trim());
-            } else if (!uploadedImageBase64) {
-                clearImagePreview();
+        async function handleImageUpload(event) {
+            const files = Array.from(event.target.files || []);
+            if (files.length === 0) return;
+
+            const remainingSlots = 6 - uploadedImagesList.length;
+            if (remainingSlots <= 0) {
+                showToast('Maximum 6 photos allowed per jewelry piece!', 'warning');
+                return;
             }
+
+            const filesToProcess = files.slice(0, remainingSlots);
+            for (const file of filesToProcess) {
+                const compressedDataUrl = await compressImageFile(file);
+                if (uploadedImagesList.length < 6) {
+                    uploadedImagesList.push(compressedDataUrl);
+                }
+            }
+
+            event.target.value = '';
+            renderMultiImagePreviews();
         }
 
-        function showImagePreview(src) {
+        function addUrlImageToGallery() {
+            const urlInput = document.getElementById('prodImageUrl');
+            const url = (urlInput.value || '').trim();
+            if (!url.startsWith('http')) {
+                showToast('Please paste a valid https:// image link', 'warning');
+                return;
+            }
+            if (uploadedImagesList.length >= 6) {
+                showToast('Maximum 6 photos reached!', 'warning');
+                return;
+            }
+            uploadedImagesList.push(url);
+            urlInput.value = '';
+            renderMultiImagePreviews();
+        }
+
+        function removeGalleryPhotoAt(index) {
+            uploadedImagesList.splice(index, 1);
+            renderMultiImagePreviews();
+        }
+
+        function renderMultiImagePreviews() {
             const container = document.getElementById('imagePreviewContainer');
-            const thumb = document.getElementById('imagePreviewThumb');
-            thumb.src = src;
+            const grid = document.getElementById('multiImagePreviewGrid');
+            const counter = document.getElementById('photoCounterBadge');
+
+            if (counter) counter.textContent = `${uploadedImagesList.length} / 6 Photos`;
+
+            if (uploadedImagesList.length === 0) {
+                container.classList.add('hidden');
+                grid.innerHTML = '';
+                return;
+            }
+
             container.classList.remove('hidden');
+            grid.innerHTML = uploadedImagesList.map((src, idx) => `
+                <div class="relative aspect-square rounded-lg overflow-hidden border border-gold/40 group bg-alabaster">
+                    <img src="${src}" class="w-full h-full object-cover">
+                    ${idx === 0 ? `<span class="absolute bottom-0 inset-x-0 bg-obsidian/80 text-gold text-[9px] font-bold text-center uppercase py-0.5">Cover</span>` : ''}
+                    <button type="button" onclick="removeGalleryPhotoAt(${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white text-[10px] flex items-center justify-center shadow">
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+            `).join('');
         }
 
         function clearImagePreview() {
-            uploadedImageBase64 = '';
-            document.getElementById('prodImageFile').value = '';
-            document.getElementById('prodImageUrl').value = '';
-            document.getElementById('imagePreviewContainer').classList.add('hidden');
+            uploadedImagesList = [];
+            const fileInput = document.getElementById('prodImageFile');
+            const urlInput = document.getElementById('prodImageUrl');
+            if (fileInput) fileInput.value = '';
+            if (urlInput) urlInput.value = '';
+            renderMultiImagePreviews();
         }
 
         function handleProductSubmit(event) {
@@ -1609,10 +1978,19 @@
             const originalPrice = origPriceVal ? Number(origPriceVal) : null;
             const inStock = document.getElementById('prodInStock').checked;
             const freeDelivery = document.getElementById('prodFreeDelivery').checked;
-            const urlInput = document.getElementById('prodImageUrl').value.trim();
+            const pendingUrlInput = document.getElementById('prodImageUrl').value.trim();
+            const videoUrl = document.getElementById('prodVideoUrl').value.trim();
             const description = document.getElementById('prodDesc').value.trim();
 
-            const finalImage = uploadedImageBase64 || urlInput || 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=900&q=80';
+            if (pendingUrlInput.startsWith('http') && uploadedImagesList.length < 6) {
+                uploadedImagesList.push(pendingUrlInput);
+            }
+
+            const finalImages = uploadedImagesList.length > 0
+                ? [...uploadedImagesList]
+                : ['https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=900&q=80'];
+
+            const finalCoverImage = finalImages[0];
 
             if (editId) {
                 const idx = products.findIndex(p => p.id === editId);
@@ -1626,10 +2004,12 @@
                         originalPrice,
                         inStock,
                         freeDelivery,
-                        image: finalImage,
+                        image: finalCoverImage,
+                        images: finalImages,
+                        videoUrl,
                         description
                     };
-                    showToast(`Updated "${name}" in your catalog!`);
+                    showToast(`Updated "${name}" (${finalImages.length} pics) in catalog!`);
                 }
             } else {
                 const newProduct = {
@@ -1641,11 +2021,13 @@
                     originalPrice,
                     inStock,
                     freeDelivery,
-                    image: finalImage,
+                    image: finalCoverImage,
+                    images: finalImages,
+                    videoUrl,
                     description
                 };
                 products.unshift(newProduct);
-                showToast(`Added "${name}" to your Storefront!`);
+                showToast(`Published "${name}" live to all users!`);
             }
 
             saveProductsToStorage();
@@ -1666,18 +2048,16 @@
             document.getElementById('prodOriginalPrice').value = product.originalPrice || '';
             document.getElementById('prodInStock').checked = product.inStock !== false;
             document.getElementById('prodFreeDelivery').checked = product.freeDelivery !== false;
+            document.getElementById('prodVideoUrl').value = product.videoUrl || '';
             document.getElementById('prodDesc').value = product.description;
 
             updateLiveDiscountBadge();
 
-            if (product.image.startsWith('data:')) {
-                uploadedImageBase64 = product.image;
-                document.getElementById('prodImageUrl').value = '';
-            } else {
-                uploadedImageBase64 = '';
-                document.getElementById('prodImageUrl').value = product.image;
-            }
-            showImagePreview(product.image);
+            uploadedImagesList = Array.isArray(product.images) && product.images.length > 0
+                ? [...product.images]
+                : (product.image ? [product.image] : []);
+            document.getElementById('prodImageUrl').value = '';
+            renderMultiImagePreviews();
 
             document.getElementById('formModeSubtitle').textContent = 'Editing Existing Catalog Item';
             document.getElementById('formTitle').textContent = 'Update Jewelry Details';
@@ -1736,6 +2116,7 @@
             document.getElementById('editProductId').value = '';
             document.getElementById('prodInStock').checked = true;
             document.getElementById('prodFreeDelivery').checked = true;
+            document.getElementById('prodVideoUrl').value = '';
             document.getElementById('liveDiscountPreview').classList.add('hidden');
             clearImagePreview();
 
@@ -1793,13 +2174,18 @@
                 const discountPercent = item.originalPrice && item.originalPrice > item.price
                     ? Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)
                     : null;
+                const photoCount = Array.isArray(item.images) ? item.images.length : 1;
+                const hasVideo = Boolean(item.videoUrl && item.videoUrl.trim());
 
                 return `
                 <div class="bg-cream p-4 sm:p-5 rounded-2xl border border-gold/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-gold transition-all shadow-xs">
                     <div class="flex items-start sm:items-center gap-4 w-full sm:w-auto">
-                        <img src="${item.image}" alt="${item.name}" 
-                             onerror="this.src='https://placehold.co/120x120/141817/C5A059?text=J'"
-                             class="w-20 h-20 rounded-xl object-cover border border-gold/30 shrink-0">
+                        <div class="relative shrink-0">
+                            <img src="${item.image}" alt="${item.name}" 
+                                 onerror="this.src='https://placehold.co/120x120/141817/C5A059?text=J'"
+                                 class="w-20 h-20 rounded-xl object-cover border border-gold/30">
+                            <span class="absolute -bottom-1.5 -right-1.5 bg-obsidian text-gold text-[10px] font-bold px-2 py-0.5 rounded-full border border-gold/40">${photoCount}/6 Pics</span>
+                        </div>
                         <div class="space-y-1 flex-1 min-w-0">
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <span class="text-[10px] uppercase tracking-widest text-goldDark font-bold">${item.category}</span>
@@ -1807,6 +2193,7 @@
                                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700'}">
                                     ${isAvailable ? '● In Stock' : '○ Out of Stock'}
                                 </span>
+                                ${hasVideo ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-100 text-pink-800 flex items-center gap-1"><i class="ph-fill ph-instagram-logo"></i>Reel Linked</span>` : ''}
                             </div>
                             <h4 class="font-serif text-lg sm:text-xl font-semibold text-obsidian truncate">${item.name}</h4>
                             <div class="flex items-baseline gap-2">
@@ -1818,10 +2205,16 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end pt-3 sm:pt-0 border-t sm:border-t-0 border-gold/15">
+                        <button onclick="openShareProductModal('${item.id}')" 
+                                class="px-3 py-2 rounded-xl bg-alabaster hover:bg-gold/20 text-obsidian text-xs font-semibold border border-gold/30 flex items-center gap-1" title="Share Direct Link">
+                            <i class="ph-bold ph-share-network"></i>
+                            <span>Share</span>
+                        </button>
+
                         <button onclick="toggleProductStock('${item.id}')" 
                                 class="px-3 py-2 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 ${isAvailable ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'}">
                             <i class="ph-bold ${isAvailable ? 'ph-eye-slash' : 'ph-check'}"></i>
-                            <span>${isAvailable ? 'Mark Sold Out' : 'Mark In Stock'}</span>
+                            <span>${isAvailable ? 'Sold Out' : 'In Stock'}</span>
                         </button>
 
                         <button onclick="editProduct('${item.id}')" 
@@ -1863,6 +2256,79 @@
                 toast.classList.remove('flex');
             }, 3200);
         }
+    </script>
+
+    <!-- ============================================================================ -->
+    <!-- REAL-TIME CLOUD SYNC (SO SELLER PICS APPEAR FOR ALL USERS ACROSS DEVICES)   -->
+    <!-- ============================================================================ -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        (async function initCloudCatalogSync() {
+            try {
+                if (typeof __firebase_config === 'undefined' || !__firebase_config) return;
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'jewelry-atelier-store';
+
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                const user = auth.currentUser;
+                if (!user) return;
+
+                const catalogDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'storeCatalog', 'main');
+
+                window.syncCatalogToCloud = async function(updatedProducts, updatedWhatsApp) {
+                    if (!auth.currentUser) return;
+                    try {
+                        await setDoc(catalogDocRef, {
+                            productsJson: JSON.stringify(updatedProducts),
+                            sellerWhatsApp: updatedWhatsApp || '919778405380',
+                            updatedAt: Date.now()
+                        });
+                    } catch (err) {
+                        console.error('Cloud sync error:', err);
+                    }
+                };
+
+                onSnapshot(catalogDocRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.data();
+                        if (data.productsJson) {
+                            try {
+                                const cloudProducts = JSON.parse(data.productsJson).map(normalizeProductItem);
+                                products = cloudProducts;
+                                localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+                                renderStorefront();
+                                renderAdminInventory();
+                                checkDirectProductLinkOnLoad();
+                            } catch (e) {
+                                console.error('Error parsing cloud catalog:', e);
+                            }
+                        }
+                        if (data.sellerWhatsApp) {
+                            sellerWhatsApp = data.sellerWhatsApp;
+                            updateWhatsAppDisplayLabels();
+                        }
+                    } else {
+                        window.syncCatalogToCloud(products, sellerWhatsApp);
+                    }
+                }, (error) => {
+                    console.error('Live catalog listener error:', error);
+                });
+            } catch (e) {
+                console.warn('Running in local mode:', e);
+            }
+        })();
     </script>
 </body>
 </html>
